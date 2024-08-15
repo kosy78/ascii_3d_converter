@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Object to ASCII Art Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #ascii-output {
+            font-family: monospace;
+            white-space: pre;
+            font-size: 8px;
+            line-height: 8px;
+            background-color: black;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="ascii-output"></div>
+    <script>
+        // Set up the scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a random 3D object (in this case, a cube)
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        camera.position.z = 5;
+
+        // ASCII characters for different brightness levels
+        const asciiChars = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.'];
+
+        // Function to convert the rendered image to ASCII art
+        function convertToASCII(imageData, width, height) {
+            let ascii = '';
+            for (let y = 0; y < height; y += 2) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const brightness = (imageData[i] + imageData[i + 1] + imageData[i + 2]) / 3;
+                    const charIndex = Math.floor(brightness / 25);
+                    ascii += asciiChars[charIndex] || ' ';
+                }
+                ascii += '\n';
+            }
+            return ascii;
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+
+            renderer.render(scene, camera);
+
+            // Get the image data from the renderer
+            const imageData = new Uint8Array(window.innerWidth * window.innerHeight * 4);
+            renderer.readRenderTargetPixels(renderer.getRenderTarget(), 0, 0, window.innerWidth, window.innerHeight, imageData);
+
+            // Convert to ASCII and update the output
+            const ascii = convertToASCII(imageData, window.innerWidth, window.innerHeight);
+            document.getElementById('ascii-output').textContent = ascii;
+        }
+
+        animate();
+    </script>
+</body>
+</html>
